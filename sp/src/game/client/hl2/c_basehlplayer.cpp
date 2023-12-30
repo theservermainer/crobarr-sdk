@@ -11,6 +11,7 @@
 #include "c_ai_basenpc.h"
 #include "in_buttons.h"
 #include "collisionutils.h"
+#include "iclientvehicle.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -31,12 +32,20 @@ ConVar cl_npc_speedmod_outtime( "cl_npc_speedmod_outtime", "1.5", FCVAR_CLIENTDL
 IMPLEMENT_CLIENTCLASS_DT(C_BaseHLPlayer, DT_HL2_Player, CHL2_Player)
 	RecvPropDataTable( RECVINFO_DT(m_HL2Local),0, &REFERENCE_RECV_TABLE(DT_HL2Local) ),
 	RecvPropBool( RECVINFO( m_fIsSprinting ) ),
+#ifdef SP_ANIM_STATE
+	RecvPropFloat( RECVINFO( m_flAnimRenderYaw ) ),
+#endif
 END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA( C_BaseHLPlayer )
 	DEFINE_PRED_TYPEDESCRIPTION( m_HL2Local, C_HL2PlayerLocalData ),
 	DEFINE_PRED_FIELD( m_fIsSprinting, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
+
+// link to the correct class.
+#if !defined ( HL2MP ) && !defined ( PORTAL )
+LINK_ENTITY_TO_CLASS( player, C_BaseHLPlayer );
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Drops player's primary weapon
@@ -66,6 +75,11 @@ C_BaseHLPlayer::C_BaseHLPlayer()
 	m_flZoomRate		= 0.0f;
 	m_flZoomStartTime	= 0.0f;
 	m_flSpeedMod		= cl_forwardspeed.GetFloat();
+
+#ifdef MAPBASE
+	ConVarRef scissor("r_flashlightscissor");
+	scissor.SetValue("0");
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -79,6 +93,13 @@ void C_BaseHLPlayer::OnDataChanged( DataUpdateType_t updateType )
 	{
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 	}
+
+#ifdef SP_ANIM_STATE
+	if (m_flAnimRenderYaw != FLT_MAX)
+	{
+		m_angAnimRender = QAngle( 0, m_flAnimRenderYaw, 0 );
+	}
+#endif
 
 	BaseClass::OnDataChanged( updateType );
 }
@@ -646,4 +667,151 @@ void C_BaseHLPlayer::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quatern
 	BaseClass::BuildTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed );
 	BuildFirstPersonMeathookTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed, "ValveBiped.Bip01_Head1" );
 }
+
+
+void C_BaseHLPlayer::CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov)
+{
+	BaseClass::CalcVehicleView(pVehicle, eyeOrigin, eyeAngles, zNear, zFar, fov);
+
+	if (pVehicle != nullptr)
+	{
+		if (pVehicle->GetVehicleEnt() != nullptr)
+		{
+			Vector Velocity;
+			pVehicle->GetVehicleEnt()->EstimateAbsVelocity(Velocity);
+
+			if (Velocity.Length() == 0)
+			{
+				IdleScale += gpGlobals->frametime * 0.05;
+				if (IdleScale > 1.0)
+					IdleScale = 1.0;
+			}
+			else
+			{
+				IdleScale -= gpGlobals->frametime;
+				if (IdleScale < 0.0)
+					IdleScale = 0.0;
+			}
+
+			CalcViewIdle(eyeAngles);
+		}
+	}
+}
+
+void C_BaseHLPlayer::CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov)
+{
+	BaseClass::CalcPlayerView(eyeOrigin, eyeAngles, fov);
+
+	Vector Velocity;
+	EstimateAbsVelocity(Velocity);
+
+	if (Velocity.Length() == 0)
+	{
+		IdleScale += gpGlobals->frametime * 0.05;
+		if (IdleScale > 1.0)
+			IdleScale = 1.0;
+	}
+	else
+	{
+		IdleScale -= gpGlobals->frametime;
+		if (IdleScale < 0.0)
+			IdleScale = 0.0;
+	}
+
+	CalcViewBob(eyeOrigin);
+	CalcViewIdle(eyeAngles);
+}
+
+ConVar cl_hl1_rollspeed("cl_hl1_rollspeed", "300.0");
+ConVar cl_hl1_rollangle("cl_hl1_rollangle", "0.65");
+
+// Port from HL1 code:
+// https://github.com/ValveSoftware/halflife/blob/master/cl_dll/view.cpp
+void C_BaseHLPlayer::CalcViewRoll(QAngle& eyeAngles)
+{
+	if (GetMoveType() == MOVETYPE_NOCLIP)
+		return;
+
+	float Side = CalcRoll(GetAbsAngles(), GetAbsVelocity(), cl_hl1_rollangle.GetFloat(), cl_hl1_rollspeed.GetFloat()) * 4.0;
+	eyeAngles[ROLL] += Side;
+
+	if (GetHealth() <= 0)
+	{
+		eyeAngles[ROLL] = 80;
+		return;
+	}
+}
+
+ConVar cl_hl1_bobcycle("cl_hl1_bobcycle", "0.8");
+ConVar cl_hl1_bob("cl_hl1_bob", "0.01");
+ConVar cl_hl1_bobup("cl_hl1_bobup", "0.5");
+
+// Port from HL1 code:
+// https://github.com/ValveSoftware/halflife/blob/master/cl_dll/view.cpp
+void C_BaseHLPlayer::CalcViewBob(Vector& eyeOrigin)
+{
+	float Cycle;
+	Vector Velocity;
+
+	if (GetGroundEntity() == nullptr || gpGlobals->curtime == BobLastTime)
+	{
+		eyeOrigin.z += ViewBob;
+		return;
+	}
+
+	BobLastTime = gpGlobals->curtime;
+	BobTime += gpGlobals->frametime;
+
+	Cycle = BobTime - (int)(BobTime / cl_hl1_bobcycle.GetFloat()) * cl_hl1_bobcycle.GetFloat();
+	Cycle /= cl_hl1_bobcycle.GetFloat();
+
+	if (Cycle < cl_hl1_bobup.GetFloat())
+		Cycle = M_PI * Cycle / cl_hl1_bobup.GetFloat();
+	else
+		Cycle = M_PI + M_PI * (Cycle - cl_hl1_bobup.GetFloat()) / (1.0 - cl_hl1_bobup.GetFloat());
+
+	EstimateAbsVelocity(Velocity);
+	Velocity[2] = 0;
+
+	ViewBob = sqrt(Velocity[0] * Velocity[0] + Velocity[1] * Velocity[1]) * cl_hl1_bob.GetFloat();
+	ViewBob = ViewBob * 0.3 + ViewBob * 0.7 * sin(Cycle);
+	ViewBob = min(ViewBob, 4);
+	ViewBob = max(ViewBob, -7);
+
+	eyeOrigin.z += ViewBob;
+}
+
+ConVar cl_hl1_iyaw_cycle("cl_hl1_iyaw_cycle", "2.0");
+ConVar cl_hl1_iroll_cycle("cl_hl1_iroll_cycle", "0.5");
+ConVar cl_hl1_ipitch_cycle("cl_hl1_ipitch_cycle", "1.0");
+ConVar cl_hl1_iyaw_level("cl_hl1_iyaw_level", "0.3");
+ConVar cl_hl1_iroll_level("cl_hl1_iroll_level", "0.1");
+ConVar cl_hl1_ipitch_level("cl_hl1_ipitch_level", "0.3");
+
+// Port from HL1 code:
+// https://github.com/ValveSoftware/halflife/blob/master/cl_dll/view.cpp
+void C_BaseHLPlayer::CalcViewIdle(QAngle& eyeAngles)
+{
+	eyeAngles[ROLL] += IdleScale * sin(gpGlobals->curtime * cl_hl1_iroll_cycle.GetFloat()) * cl_hl1_iroll_level.GetFloat();
+	eyeAngles[PITCH] += IdleScale * sin(gpGlobals->curtime * cl_hl1_ipitch_cycle.GetFloat()) * cl_hl1_ipitch_level.GetFloat();
+	eyeAngles[YAW] += IdleScale * sin(gpGlobals->curtime * cl_hl1_iyaw_cycle.GetFloat()) * cl_hl1_iyaw_level.GetFloat();
+}
+
+
+#ifdef SP_ANIM_STATE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const QAngle& C_BaseHLPlayer::GetRenderAngles( void )
+{
+	if ( m_flAnimRenderYaw != FLT_MAX )
+	{
+		return m_angAnimRender;
+	}
+	else
+	{
+		return BaseClass::GetRenderAngles();	
+	}
+}
+#endif
 
