@@ -61,6 +61,17 @@ public:
 	void			PerformClientSideNPCSpeedModifiers( float flFrameTime, CUserCmd *pCmd );
 
 	bool				IsWeaponLowered( void ) { return m_HL2Local.m_bWeaponLowered; }
+	
+	virtual void CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov);
+	virtual void CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
+	virtual void CalcViewRoll(QAngle& eyeAngles);
+	virtual void CalcViewBob(Vector& eyeOrigin);
+	virtual void CalcViewIdle(QAngle& eyeAngles);
+
+	float ViewBob;
+	double BobTime;
+	float BobLastTime;
+	float IdleScale;
 
 #ifdef SP_ANIM_STATE
 	virtual const QAngle&	GetRenderAngles( void );

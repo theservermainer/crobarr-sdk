@@ -238,7 +238,7 @@ float	g_verticalBob;
 
 
 static ConVar	cl_bobcycle( "cl_bobcycle","0.8" );
-static ConVar	cl_bob( "cl_bob","0.002" );
+static ConVar	cl_bob( "cl_bob","0.006" );
 static ConVar	cl_bobup( "cl_bobup","0.5" );
 
 // Register these cvars if needed for easy tweaking
@@ -253,79 +253,51 @@ static ConVar	v_ipitch_level( "v_ipitch_level", "0.3"/*, FCVAR_UNREGISTERED*/ );
 // Purpose: 
 // Output : float
 //-----------------------------------------------------------------------------
-float CBaseHLCombatWeapon::CalcViewmodelBob( void )
+float g_bob;
+float CBaseHLCombatWeapon::CalcViewmodelBob(void)
 {
-	static	float bobtime;
-	static	float lastbobtime;
-	float	cycle;
-	
-	CBasePlayer *player = ToBasePlayer( GetOwner() );
-	//Assert( player );
+	static  float bob;
+	static   float bobtime;
+	static   float lastbobtime;
+	float   cycle;
+
+	CBasePlayer* player = ToBasePlayer(GetOwner());
 
 	//NOTENOTE: For now, let this cycle continue when in the air, because it snaps badly without it
 
-	if ( ( !gpGlobals->frametime ) || ( player == NULL ) )
+	if ((!gpGlobals->frametime) || (player == NULL))
 	{
 		//NOTENOTE: We don't use this return value in our case (need to restructure the calculation function setup!)
 		return 0.0f;// just use old value
 	}
 
-	//Find the speed of the player
-	float speed = player->GetLocalVelocity().Length2D();
-
-	//FIXME: This maximum speed value must come from the server.
-	//		 MaxSpeed() is not sufficient for dealing with sprinting - jdw
-
-	speed = clamp( speed, -320, 320 );
-
-	float bob_offset = RemapVal( speed, 0, 320, 0.0f, 1.0f );
-	
-	bobtime += ( gpGlobals->curtime - lastbobtime ) * bob_offset;
 	lastbobtime = gpGlobals->curtime;
 
+	bobtime += gpGlobals->frametime;
+
 	//Calculate the vertical bob
-	cycle = bobtime - (int)(bobtime/HL2_BOB_CYCLE_MAX)*HL2_BOB_CYCLE_MAX;
-	cycle /= HL2_BOB_CYCLE_MAX;
+	cycle = bobtime - (int)(bobtime / cl_bobcycle.GetFloat()) * cl_bobcycle.GetFloat();
+	cycle /= cl_bobcycle.GetFloat();
 
-	if ( cycle < HL2_BOB_UP )
+	if (cycle < cl_bobup.GetFloat())
 	{
-		cycle = M_PI * cycle / HL2_BOB_UP;
+		cycle = M_PI * cycle / cl_bobup.GetFloat();
 	}
 	else
 	{
-		cycle = M_PI + M_PI*(cycle-HL2_BOB_UP)/(1.0 - HL2_BOB_UP);
-	}
-	
-	g_verticalBob = speed*0.005f;
-	g_verticalBob = g_verticalBob*0.3 + g_verticalBob*0.7*sin(cycle);
-
-	g_verticalBob = clamp( g_verticalBob, -7.0f, 4.0f );
-
-	//Calculate the lateral bob
-	cycle = bobtime - (int)(bobtime/HL2_BOB_CYCLE_MAX*2)*HL2_BOB_CYCLE_MAX*2;
-	cycle /= HL2_BOB_CYCLE_MAX*2;
-
-	if ( cycle < HL2_BOB_UP )
-	{
-		cycle = M_PI * cycle / HL2_BOB_UP;
-	}
-	else
-	{
-		cycle = M_PI + M_PI*(cycle-HL2_BOB_UP)/(1.0 - HL2_BOB_UP);
+		cycle = M_PI + M_PI * (cycle - cl_bobup.GetFloat()) / (1.0 - cl_bobup.GetFloat());
 	}
 
-	g_lateralBob = speed*0.005f;
-	g_lateralBob = g_lateralBob*0.3 + g_lateralBob*0.7*sin(cycle);
-	g_lateralBob = clamp( g_lateralBob, -7.0f, 4.0f );
+	//Find the speed of the player
+	Vector2D vel = player->GetLocalVelocity().AsVector2D();
 
-#ifdef MAPBASE
-	if (GetBobScale() != 1.0f)
-	{
-		//g_verticalBob *= GetBobScale();
-		g_lateralBob *= GetBobScale();
-	}
-#endif
-	
+	bob = sqrt(vel[0] * vel[0] + vel[1] * vel[1]) * cl_bob.GetFloat();
+	bob = bob * 0.3 + bob * 0.7 * sin(cycle);
+	bob = min(bob, 4);
+	bob = max(bob, -7);
+
+	g_bob = bob;
+
 	//NOTENOTE: We don't use this return value in our case (need to restructure the calculation function setup!)
 	return 0.0f;
 }
@@ -336,26 +308,39 @@ float CBaseHLCombatWeapon::CalcViewmodelBob( void )
 //			&angles - 
 //			viewmodelindex - 
 //-----------------------------------------------------------------------------
-void CBaseHLCombatWeapon::AddViewmodelBob( CBaseViewModel *viewmodel, Vector &origin, QAngle &angles )
+float v_idlescale = 0.0f;
+//float aBob = 0.0f;
+void CBaseHLCombatWeapon::AddViewmodelBob(CBaseViewModel* viewmodel, Vector& origin, QAngle& angles)
 {
-	Vector	forward, right;
-	AngleVectors( angles, &forward, &right, NULL );
+	Vector   forward, right, up;
+	QAngle oldAngles = angles;
+	AngleVectors(angles, &forward, &right, &up);
 
 	CalcViewmodelBob();
+	static float time2 = 0.0f;
+	time2 += gpGlobals->frametime;
 
+	//angles[ROLL] += v_idlescale * sin(time2*0.5) * 0.1;
+	//angles[PITCH] += v_idlescale * sin(time2 * 1) * 0.3;
+	//angles[YAW] += v_idlescale * sin(time2 * 2) * 0.3;
+	//aBob += g_bob;
 	// Apply bob, but scaled down to 40%
-	VectorMA( origin, g_verticalBob * 0.1f, forward, origin );
-	
-	// Z bob a bit more
-	origin[2] += g_verticalBob * 0.1f;
-	
-	// bob the angles
-	angles[ ROLL ]	+= g_verticalBob * 0.5f;
-	angles[ PITCH ]	-= g_verticalBob * 0.4f;
+	for (int i = 0; i < 3; i++)
+	{
+		origin[i] += g_bob * 0.4 * forward[i];
+	}
 
-	angles[ YAW ]	-= g_lateralBob  * 0.3f;
+	//origin[2] += g_bob;
 
-	VectorMA( origin, g_lateralBob * 0.8f, right, origin );
+	// throw in a little tilt.
+	angles[YAW] -= g_bob * 0.5f;
+	angles[ROLL] -= g_bob * 1.0f;
+	angles[PITCH] -= g_bob * 0.3f;
+
+	// pushing the view origin down off of the same X/Z plane as the ent's origin will give the
+	// gun a very nice 'shifting' effect when the player looks up/down. If there is a problem
+	// with view model distortion, this may be a cause. (SJB). 
+	origin[2] -= 1;
 }
 
 //-----------------------------------------------------------------------------
