@@ -933,8 +933,8 @@ static void CalcVirtualAnimation( virtualmodel_t *pVModel, const CStudioHdr *pSt
 	{
 		if (pStudioHdr->boneFlags(i) & boneMask)
 		{
-			int l = pSeqGroup->boneMap[i];
-			if (l >= 0 && pweight[l] > 0.0f)
+			int j = pSeqGroup->boneMap[i];
+			if (j >= 0 && pweight[j] > 0.0f)
 			{
 				if (animdesc.flags & STUDIO_DELTA)
 				{
@@ -943,13 +943,13 @@ static void CalcVirtualAnimation( virtualmodel_t *pVModel, const CStudioHdr *pSt
 				}
 				else if (pSeqLinearBones)
 				{
-					q[i] = pSeqLinearBones->quat(l);
-					pos[i] = pSeqLinearBones->pos(l);
+					q[i] = pSeqLinearBones->quat(j);
+					pos[i] = pSeqLinearBones->pos(j);
 				}
 				else 
 				{
-					q[i] = pSeqbone[l].quat;
-					pos[i] = pSeqbone[l].pos;
+					q[i] = pSeqbone[j].quat;
+					pos[i] = pSeqbone[j].pos;
 				}
 #ifdef STUDIO_ENABLE_PERF_COUNTERS
 				pStudioHdr->m_nPerfUsedBones++;
@@ -997,9 +997,10 @@ static void CalcVirtualAnimation( virtualmodel_t *pVModel, const CStudioHdr *pSt
 		matrix3x4_t *boneToWorld = g_MatrixPool.Alloc();
 		CBoneBitList boneComputed;
 
-		for (int l = 0; i < animdesc.numlocalhierarchy; i++)
+		int i;
+		for (i = 0; i < animdesc.numlocalhierarchy; i++)
 		{
-			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( l );
+			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( i );
 
 			if ( !pHierarchy )
 				break;
@@ -1140,9 +1141,10 @@ static void CalcAnimation( const CStudioHdr *pStudioHdr,	Vector *pos, Quaternion
 		matrix3x4_t *boneToWorld = g_MatrixPool.Alloc();
 		CBoneBitList boneComputed;
 
-		for (int j = 0; j < animdesc.numlocalhierarchy; j++)
+		int i;
+		for (i = 0; i < animdesc.numlocalhierarchy; i++)
 		{
-			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( j );
+			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( i );
 
 			if ( !pHierarchy )
 				break;
@@ -5608,9 +5610,9 @@ bool Studio_AnimPosition( mstudioanimdesc_t *panim, float flCycle, Vector &vecPo
 			vecAngle.y = vecAngle.y * (1 - f) + pmove->angle * f;
 			if (iLoops != 0)
 			{
-				mstudiomovement_t *pmoveLocl = panim->pMovement( panim->nummovements - 1 );
-				vecPos = vecPos + iLoops * pmoveLocl->position;
-				vecAngle.y = vecAngle.y + iLoops * pmoveLocl->angle;
+				mstudiomovement_t *pmove = panim->pMovement( panim->nummovements - 1 );
+				vecPos = vecPos + iLoops * pmove->position; 
+				vecAngle.y = vecAngle.y + iLoops * pmove->angle; 
 			}
 			return true;
 		}

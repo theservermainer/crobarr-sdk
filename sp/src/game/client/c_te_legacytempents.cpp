@@ -597,12 +597,8 @@ bool C_LocalTempEntity::Frame( float frametime, int framenumber )
 
 	if ( flags & FTENT_WINDBLOWN )
 	{
-#ifdef MAPBASE
-		Vector vecWind = GetWindspeedAtLocation( GetAbsOrigin() );
-#else
 		Vector vecWind;
 		GetWindspeedAtTime( gpGlobals->curtime, vecWind );
-#endif
 
 		for ( int i = 0 ; i < 2 ; i++ )
 		{
@@ -1833,9 +1829,6 @@ void CTempEnts::MuzzleFlash( const Vector& pos1, const QAngle& angles, int type,
 
 	// UNDONE: These need their own effects/sprites.  For now use the pistol
 	// SMG1
-#if defined ( HL2MP )		//  HACK for hl2mp, make the default muzzleflash the smg muzzleflash for weapons like the RPG that are using 'type 0'
-	default:
-#endif // HL2MP
 	case MUZZLEFLASH_SMG1:
 		if ( firstPerson )
 		{
@@ -1873,12 +1866,10 @@ void CTempEnts::MuzzleFlash( const Vector& pos1, const QAngle& angles, int type,
 		}
 		break;
 	
-#if !defined ( HL2MP )	//  HACK for hl2mp, make the default muzzleflash the smg muzzleflash for weapons like the RPG that are using 'type 0'
 	default:
 		// There's no supported muzzle flash for the type specified!
 		Assert(0);
 		break;
-#endif // HL2MP
 	}
 
 #endif

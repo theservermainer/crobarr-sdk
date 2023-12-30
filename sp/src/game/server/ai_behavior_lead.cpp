@@ -543,12 +543,8 @@ int CAI_LeadBehavior::SelectSchedule()
 				if ( !m_flWeaponSafetyTimeOut || (m_flWeaponSafetyTimeOut > gpGlobals->curtime) )
 					return SCHED_LEAD_PLAYERNEEDSWEAPON;
 
-#ifdef MAPBASE
-				pFollower->GiveNamedItem( STRING(m_weaponname) );
-#else
 				string_t iszItem = AllocPooledString( "weapon_bugbait" );
 				pFollower->GiveNamedItem( STRING(iszItem) );
-#endif
 			}
 		}
 
@@ -1653,9 +1649,6 @@ public:
 
 private:
 	string_t	m_iszWeaponName;
-#ifdef MAPBASE
-	float		m_flTimeoutTime = 60;
-#endif
 	string_t	m_iszMissingWeaponConceptModifier;
 
 	DECLARE_DATADESC();
@@ -1671,9 +1664,6 @@ LINK_ENTITY_TO_CLASS( ai_goal_lead_weapon, CAI_LeadGoal_Weapon );
 BEGIN_DATADESC( CAI_LeadGoal_Weapon )
 
 	DEFINE_KEYFIELD( m_iszWeaponName, 		FIELD_STRING, 	"WeaponName"),
-#ifdef MAPBASE
-	DEFINE_KEYFIELD( m_flTimeoutTime, FIELD_FLOAT, "TimeoutTime" ),
-#endif
 	DEFINE_KEYFIELD( m_iszMissingWeaponConceptModifier, FIELD_STRING, 	"MissingWeaponConceptModifier"),
 
 END_DATADESC()
@@ -1698,10 +1688,6 @@ void CAI_LeadGoal_Weapon::InputActivate( inputdata_t &inputdata )
 	CAI_LeadBehavior *pBehavior = GetLeadBehavior();
 	if ( pBehavior )
 	{
-#ifdef MAPBASE
-		pBehavior->SetWaitForWeapon( m_iszWeaponName, m_flTimeoutTime );
-#else
 		pBehavior->SetWaitForWeapon( m_iszWeaponName );
-#endif
 	}
 }

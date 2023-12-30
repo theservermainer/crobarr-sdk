@@ -28,7 +28,6 @@ CBaseMultiplayerPlayer::CBaseMultiplayerPlayer()
 CBaseMultiplayerPlayer::~CBaseMultiplayerPlayer()
 {
 	m_pAchievementKV->deleteThis();
-	delete m_pExpresser;
 }
 
 //-----------------------------------------------------------------------------
@@ -88,19 +87,10 @@ IResponseSystem *CBaseMultiplayerPlayer::GetResponseSystem()
 //-----------------------------------------------------------------------------
 // Purpose: Doesn't actually speak the concept. Just finds a response in the system. You then have to play it yourself.
 //-----------------------------------------------------------------------------
-bool CBaseMultiplayerPlayer::SpeakConcept( AI_Response &response, int iConcept )
+AI_Response *CBaseMultiplayerPlayer::SpeakConcept( int iConcept )
 {
 	m_iCurrentConcept = iConcept;
-#ifdef NEW_RESPONSE_SYSTEM
-	CAI_Concept concept(g_pszMPConcepts[iConcept]);
-	concept.SetSpeaker(this);
-	return FindResponse( response, concept );
-#else
-	AI_Response *pResponse = SpeakFindResponse( g_pszMPConcepts[iConcept] );
-	if (pResponse)
-		response = *pResponse;
-	return pResponse != NULL;
-#endif
+	return SpeakFindResponse( g_pszMPConcepts[iConcept] );
 }
 
 //-----------------------------------------------------------------------------

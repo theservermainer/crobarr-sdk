@@ -36,9 +36,6 @@
 #include "toolframework/itoolentity.h"
 #include "tier0/threadtools.h"
 
-#include "vscript/ivscript.h"
-#include "vscript_shared.h"
-
 class C_Team;
 class IPhysicsObject;
 class IClientVehicle;
@@ -161,15 +158,6 @@ struct thinkfunc_t
 	int			m_nLastThinkTick;
 };
 
-#ifdef MAPBASE_VSCRIPT
-struct scriptthinkfunc_t
-{
-	float		m_flNextThink;
-	HSCRIPT		m_hfnThink;
-	unsigned	m_iContextHash;
-};
-#endif
-
 #define CREATE_PREDICTED_ENTITY( className )	\
 	C_BaseEntity::CreatePredictedEntityByName( className, __FILE__, __LINE__ );
 
@@ -195,8 +183,6 @@ public:
 	DECLARE_DATADESC();
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
-	// script description
-	DECLARE_ENT_SCRIPTDESC();
 
 									C_BaseEntity();
 	virtual							~C_BaseEntity();
@@ -269,35 +255,6 @@ public:
 	virtual void					SetClassname( const char *className );
 
 	string_t						m_iClassname;
-
-#ifdef MAPBASE_VSCRIPT
-	// VSCRIPT
-	bool ValidateScriptScope();
-	bool CallScriptFunction( const char* pFunctionName, ScriptVariant_t* pFunctionReturn );
-
-	HSCRIPT GetOrCreatePrivateScriptScope();
-	HSCRIPT GetScriptScope() { return m_ScriptScope; }
-
-	HSCRIPT LookupScriptFunction(const char* pFunctionName);
-	bool CallScriptFunctionHandle(HSCRIPT hFunc, ScriptVariant_t* pFunctionReturn);
-
-	bool RunScriptFile( const char* pScriptFile, bool bUseRootScope = false );
-	bool RunScript( const char* pScriptText, const char* pDebugFilename = "C_BaseEntity::RunScript" );
-#endif
-
-	HSCRIPT					GetScriptOwnerEntity();
-	virtual void			SetScriptOwnerEntity(HSCRIPT pOwner);
-
-	HSCRIPT GetScriptInstance();
-
-	HSCRIPT			m_hScriptInstance;
-	string_t		m_iszScriptId;
-#ifdef MAPBASE_VSCRIPT
-	CScriptScope	m_ScriptScope;
-
-	static ScriptHook_t g_Hook_UpdateOnRemove;
-	static ScriptHook_t g_Hook_ModifyEmitSoundParams;
-#endif
 
 // IClientUnknown overrides.
 public:
@@ -399,11 +356,6 @@ public:
 	bool							IsMarkedForDeletion( void );
 
 	virtual int						entindex( void ) const;
-
-#ifdef MAPBASE_VSCRIPT
-	// "I don't know why but wrapping entindex() works, while calling it directly crashes."
-	inline int GetEntityIndex() const { return entindex(); }
-#endif
 	
 	// This works for client-only entities and returns the GetEntryIndex() of the entity's handle,
 	// so the sound system can get an IClientEntity from it.
@@ -906,7 +858,6 @@ public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( pev, mins, maxs );
 	char const						*GetClassname( void );
 	char const						*GetDebugName( void );
-	virtual const char				*GetPlayerName() const { return NULL; }
 	static int						PrecacheModel( const char *name ); 
 	static bool						PrecacheSound( const char *name );
 	static void						PrefetchSound( const char *name );
@@ -1049,7 +1000,6 @@ public:
 	/////////////////
 
 	virtual bool					IsPlayer( void ) const { return false; };
-	virtual bool						IsBot( void ) const { return ((GetFlags() & FL_FAKECLIENT) == FL_FAKECLIENT) ? true : false; }
 	virtual bool					IsBaseCombatCharacter( void ) { return false; };
 	virtual C_BaseCombatCharacter	*MyCombatCharacterPointer( void ) { return NULL; }
 	virtual bool					IsNPC( void ) { return false; }
@@ -1067,11 +1017,6 @@ public:
 	virtual Vector			EyePosition( void );
 	virtual const QAngle&	EyeAngles( void );		// Direction of eyes
 	virtual const QAngle&	LocalEyeAngles( void );	// Direction of eyes in local space (pl.v_angle)
-
-#ifdef MAPBASE
-	// Created for script_intro and info_player_view_proxy
-	virtual void			GetEyePosition( Vector &vecOrigin, QAngle &angAngles ) { vecOrigin = EyePosition(); angAngles = EyeAngles(); }
-#endif
 	
 	// position of ears
 	virtual Vector		EarPosition( void );
@@ -1165,67 +1110,9 @@ public:
 	bool				IsFollowingEntity();
 	CBaseEntity			*GetFollowedEntity();
 
-#ifdef MAPBASE_VSCRIPT
-	void ScriptFollowEntity( HSCRIPT hBaseEntity, bool bBoneMerge );
-	HSCRIPT ScriptGetFollowedEntity();
-#endif
-
 	// For shadows rendering the correct body + sequence...
 	virtual int GetBody() { return 0; }
 	virtual int GetSkin() { return 0; }
-
-	const Vector& ScriptGetForward(void) { static Vector vecForward; GetVectors(&vecForward, NULL, NULL); return vecForward; }
-#ifdef MAPBASE_VSCRIPT
-	const Vector& ScriptGetRight(void) { static Vector vecRight; GetVectors(NULL, &vecRight, NULL); return vecRight; }
-#endif
-	const Vector& ScriptGetLeft(void)  { static Vector vecRight; GetVectors(NULL, &vecRight, NULL); return vecRight; }
-
-	const Vector& ScriptGetUp(void) { static Vector vecUp; GetVectors(NULL, NULL, &vecUp); return vecUp; }
-
-#ifdef MAPBASE_VSCRIPT
-	const char* ScriptGetModelName( void ) const { return STRING(GetModelName()); }
-
-	void ScriptStopSound(const char* soundname);
-	void ScriptEmitSound(const char* soundname);
-	float ScriptSoundDuration(const char* soundname, const char* actormodel);
-
-	void VScriptPrecacheScriptSound(const char* soundname);
-
-	const Vector& ScriptEyePosition(void) { static Vector vec; vec = EyePosition(); return vec; }
-	const QAngle& ScriptEyeAngles(void) { static QAngle ang; ang = EyeAngles(); return ang; }
-	void ScriptSetForward( const Vector& v ) { QAngle angles; VectorAngles( v, angles ); SetAbsAngles( angles ); }
-
-	const Vector& ScriptGetBoundingMins( void ) { return m_Collision.OBBMins(); }
-	const Vector& ScriptGetBoundingMaxs( void ) { return m_Collision.OBBMaxs(); }
-
-	HSCRIPT ScriptEntityToWorldTransform( void );
-
-	HSCRIPT ScriptGetPhysicsObject( void );
-
-	void ScriptSetParent( HSCRIPT hParent, const char *szAttachment );
-	HSCRIPT ScriptGetMoveParent( void );
-	HSCRIPT ScriptGetRootMoveParent();
-	HSCRIPT ScriptFirstMoveChild( void );
-	HSCRIPT ScriptNextMovePeer( void );
-
-	const Vector& ScriptGetColorVector();
-	int ScriptGetColorR()	{ return m_clrRender.GetR(); }
-	int ScriptGetColorG()	{ return m_clrRender.GetG(); }
-	int ScriptGetColorB()	{ return m_clrRender.GetB(); }
-	int ScriptGetAlpha()	{ return m_clrRender.GetA(); }
-	void ScriptSetColorVector( const Vector& vecColor );
-	void ScriptSetColor( int r, int g, int b );
-	void ScriptSetColorR( int iVal )	{ SetRenderColorR( iVal ); }
-	void ScriptSetColorG( int iVal )	{ SetRenderColorG( iVal ); }
-	void ScriptSetColorB( int iVal )	{ SetRenderColorB( iVal ); }
-	void ScriptSetAlpha( int iVal )		{ SetRenderColorA( iVal ); }
-
-	int ScriptGetRenderMode() { return GetRenderMode(); }
-	void ScriptSetRenderMode( int nRenderMode ) { SetRenderMode( (RenderMode_t)nRenderMode ); }
-
-	int ScriptGetMoveType() { return GetMoveType(); }
-	void ScriptSetMoveType( int iMoveType ) { SetMoveType( (MoveType_t)iMoveType ); }
-#endif
 
 	// Stubs on client
 	void	NetworkStateManualMode( bool activate )		{ }
@@ -1264,7 +1151,7 @@ public:
 #ifdef _DEBUG
 	void FunctionCheck( void *pFunction, const char *name );
 
-	ENTITYFUNCPTR TouchSet( ENTITYFUNCPTR func, const char *name ) 
+	ENTITYFUNCPTR TouchSet( ENTITYFUNCPTR func, char *name ) 
 	{ 
 		//COMPILE_TIME_ASSERT( sizeof(func) == 4 );
 		m_pfnTouch = func; 
@@ -1374,7 +1261,6 @@ public:
 	void SetRenderMode( RenderMode_t nRenderMode, bool bForceUpdate = false );
 	RenderMode_t GetRenderMode() const;
 
-	const char* GetEntityName();
 public:	
 
 	// Determine what entity this corresponds to
@@ -1388,11 +1274,6 @@ public:
 	unsigned short					m_EntClientFlags;
 
 	CNetworkColor32( m_clrRender );
-
-#ifdef MAPBASE
-	int								m_iViewHideFlags;
-	bool							m_bDisableFlashlight;
-#endif
 
 private:
 	
@@ -1531,15 +1412,6 @@ protected:
 	int								GetIndexForThinkContext( const char *pszContext );
 	CUtlVector< thinkfunc_t >		m_aThinkFunctions;
 	int								m_iCurrentThinkContext;
-
-#ifdef MAPBASE_VSCRIPT
-public:
-	void							ScriptSetContextThink( const char* szContext, HSCRIPT hFunc, float time );
-	void							ScriptContextThink();
-private:
-	CUtlVector< scriptthinkfunc_t* > m_ScriptThinkFuncs;
-public:
-#endif
 
 	// Object eye position
 	Vector							m_vecViewOffset;
@@ -1767,8 +1639,6 @@ private:
 	// The owner!
 	EHANDLE							m_hOwnerEntity;
 	EHANDLE							m_hEffectEntity;
-
-	char							m_iName[MAX_PATH];
 	
 	// This is a random seed used by the networking code to allow client - side prediction code
 	//  randon number generators to spit out the same random numbers on both sides for a particular
@@ -2323,12 +2193,6 @@ inline bool C_BaseEntity::ShouldRecordInTools() const
 	return true;
 #endif
 }
-
-inline const char *C_BaseEntity::GetEntityName() 
-{ 
-	return m_iName; 
-}
-
 
 C_BaseEntity *CreateEntityByName( const char *className );
 

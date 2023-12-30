@@ -64,13 +64,6 @@ static char *CopyString( const char *in )
 	return n;
 }
 
-#ifdef MAPBASE
-ConVar vgui_mapbase_custom_schemes( "vgui_mapbase_custom_schemes", "1" );
-
-// This is used in mapbase_shared.cpp
-HScheme g_iCustomClientSchemeOverride;
-#endif
-
 #if defined( VGUI_USEDRAGDROP )
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1619,31 +1612,17 @@ void Panel::DeletePanel()
 //-----------------------------------------------------------------------------
 HScheme Panel::GetScheme()
 {
-	HScheme iScheme;
-
 	if (m_iScheme)
 	{
-		iScheme = m_iScheme; // return our internal scheme
+		return m_iScheme; // return our internal scheme
 	}
-	else if (GetVParent()) // recurse down the heirarchy 
+	
+	if (GetVParent()) // recurse down the heirarchy 
 	{
-		iScheme = ipanel()->GetScheme(GetVParent());
-	}
-	else
-	{
-		iScheme = scheme()->GetDefaultScheme();
+		return ipanel()->GetScheme(GetVParent());
 	}
 
-#ifdef MAPBASE
-	// If a custom client scheme is available, use the custom scheme.
-	// TODO: Need a better way to detect that this panel actually uses ClientScheme.res
-	if (g_iCustomClientSchemeOverride != 0 && iScheme == scheme()->GetScheme( "ClientScheme" ) && vgui_mapbase_custom_schemes.GetBool())
-	{
-		return g_iCustomClientSchemeOverride;
-	}
-#endif
-
-	return iScheme;
+	return scheme()->GetDefaultScheme();
 }
 
 //-----------------------------------------------------------------------------
@@ -8531,7 +8510,7 @@ void VguiPanelGetSortedChildPanelList( Panel *pParentPanel, void *pSortedPanels 
 	}
 }
 
-void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, const char *pchFilter /*= NULL*/, int nFilterType /*= 0*/ )
+void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, char *pchFilter /*= NULL*/, int nFilterType /*= 0*/ )
 {
 	CUtlSortVector< SortedPanel_t, CSortedPanelYLess > *pList = reinterpret_cast< CUtlSortVector< SortedPanel_t, CSortedPanelYLess >* >( pSortedPanels );
 

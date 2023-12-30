@@ -46,11 +46,6 @@ $Project "server"
 	"game\server\server_episodic.vpc"	[($WIN32||$X360||$POSIX) && $EPISODIC]
 }
 
-$Project "responserules"
-{
-	"responserules\runtime\response_rules.vpc" [($WINDOWS||$X360||$POSIX) && $NEW_RESPONSE_SYSTEM]
-}
-
 $Project "mathlib"
 {
 	"mathlib\mathlib.vpc" [$WINDOWS||$X360||$POSIX]
@@ -63,7 +58,7 @@ $Project "motionmapper"
 
 $Project "phonemeextractor"
 {
-	"utils\phonemeextractor\phonemeextractor.vpc" [$WIN32 && !($VS2015||$VS2017||$VS2019||$VS2022)] // Not currently working with newer toolsets; may be fixable with modification
+	"utils\phonemeextractor\phonemeextractor.vpc" [$WIN32]
 }
 
 $Project "raytrace"
@@ -73,7 +68,7 @@ $Project "raytrace"
 
 $Project "qc_eyes"
 {
-	"utils\qc_eyes\qc_eyes.vpc" [$WIN32 && !($VS2015||$VS2017||$VS2019||$VS2022)] // Not currently working with newer toolsets; might be fixed by having C++ MFC for v141 build tools and/or C++ ATL for v141 build tools installed
+	"utils\qc_eyes\qc_eyes.vpc" [$WIN32]
 }
 
 $Project "serverplugin_empty"
@@ -114,11 +109,6 @@ $Project "vrad_dll"
 $Project "vrad_launcher"
 {
 	"utils\vrad_launcher\vrad_launcher.vpc" [$WIN32]
-}
-
-$Project "vscript"
-{
-	"vscript\vscript.vpc"
 }
 
 $Project "vtf2tga"

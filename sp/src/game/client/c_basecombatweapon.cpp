@@ -16,9 +16,6 @@
 #include "tier1/KeyValues.h"
 #include "toolframework/itoolframework.h"
 #include "toolframework_client.h"
-#ifdef MAPBASE
-#include "viewrender.h"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -85,24 +82,6 @@ static inline bool ShouldDrawLocalPlayerViewModel( void )
 {
 #if defined( PORTAL )
 	return false;
-#elif MAPBASE
-	// We shouldn't draw the viewmodel externally.
-	C_BasePlayer *localplayer = C_BasePlayer::GetLocalPlayer();
-	if (localplayer)
-	{
-		if (localplayer->m_bDrawPlayerModelExternally)
-		{
-			// If this isn't the main view, draw the weapon.
-			view_id_t viewID = CurrentViewID();
-			if (viewID != VIEW_MAIN && viewID != VIEW_INTRO_CAMERA)
-				return false;
-		}
-
-		// Since we already have the local player, check its own ShouldDrawThisPlayer() to avoid extra checks
-		return !localplayer->ShouldDrawThisPlayer();
-	}
-	else
-		return false;
 #else
 	return !C_BasePlayer::ShouldDrawLocalPlayer();
 #endif
@@ -125,15 +104,9 @@ void C_BaseCombatWeapon::OnRestore()
 
 int C_BaseCombatWeapon::GetWorldModelIndex( void )
 {
-#ifdef MAPBASE
-	int iIndex = GetOwner() ? m_iWorldModelIndex.Get() : m_iDroppedModelIndex.Get();
-#else
-	int iIndex = m_iWorldModelIndex.Get();
-#endif
-
 	if ( GameRules() )
 	{
-		const char *pBaseName = modelinfo->GetModelName( modelinfo->GetModel( iIndex ) );
+		const char *pBaseName = modelinfo->GetModelName( modelinfo->GetModel( m_iWorldModelIndex ) );
 		const char *pTranslatedName = GameRules()->TranslateEffectForVisionFilter( "weapons", pBaseName );
 
 		if ( pTranslatedName != pBaseName )
@@ -142,7 +115,7 @@ int C_BaseCombatWeapon::GetWorldModelIndex( void )
 		}
 	}
 
-	return iIndex;
+	return m_iWorldModelIndex;
 }
 
 //-----------------------------------------------------------------------------
@@ -183,8 +156,11 @@ void C_BaseCombatWeapon::OnDataChanged( DataUpdateType_t updateType )
 	}
 	else // weapon carried by other player or not at all
 	{
-		// See comment below
-		EnsureCorrectRenderingModel();
+		int overrideModelIndex = CalcOverrideModelIndex();
+		if( overrideModelIndex != -1 && overrideModelIndex != GetModelIndex() )
+		{
+			SetModelIndex( overrideModelIndex );
+		}
 	}
 
 	UpdateVisibility();
@@ -456,12 +432,6 @@ bool C_BaseCombatWeapon::ShouldDraw( void )
 		if ( !ShouldDrawLocalPlayerViewModel() )
 			return true;
 
-#ifdef MAPBASE
-		// We're drawing this in non-main views, handle it in DrawModel()
-		if ( pLocalPlayer->m_bDrawPlayerModelExternally )
-			return true;
-#endif
-
 		// don't draw active weapon if not in some kind of 3rd person mode, the viewmodel will do that
 		return false;
 	}
@@ -508,44 +478,15 @@ int C_BaseCombatWeapon::DrawModel( int flags )
 	// check if local player chases owner of this weapon in first person
 	C_BasePlayer *localplayer = C_BasePlayer::GetLocalPlayer();
 
-	if ( localplayer )
+	if ( localplayer && localplayer->IsObserver() && GetOwner() )
 	{
-#ifdef MAPBASE
-		if (localplayer->m_bDrawPlayerModelExternally)
-		{
-			// If this isn't the main view, draw the weapon.
-			view_id_t viewID = CurrentViewID();
-			if ( (!localplayer->InFirstPersonView() || (viewID != VIEW_MAIN && viewID != VIEW_INTRO_CAMERA)) && (viewID != VIEW_SHADOW_DEPTH_TEXTURE || !localplayer->IsEffectActive(EF_DIMLIGHT)) )
-			{
-				// TODO: Is this inefficient?
-				int nModelIndex = GetModelIndex();
-				int nWorldModelIndex = GetWorldModelIndex();
-				if (nModelIndex != nWorldModelIndex)
-				{
-					SetModelIndex(nWorldModelIndex);
-				}
-
-				int iDraw = BaseClass::DrawModel(flags);
-
-				if (nModelIndex != nWorldModelIndex)
-				{
-					SetModelIndex(nModelIndex);
-				}
-
-				return iDraw;
-			}
-		}
-#endif
-		if ( localplayer->IsObserver() && GetOwner() )
-		{
-			// don't draw weapon if chasing this guy as spectator
-			// we don't check that in ShouldDraw() since this may change
-			// without notification 
+		// don't draw weapon if chasing this guy as spectator
+		// we don't check that in ShouldDraw() since this may change
+		// without notification 
 		
-			if ( localplayer->GetObserverMode() == OBS_MODE_IN_EYE &&
-				 localplayer->GetObserverTarget() == GetOwner() ) 
-				return false;
-		}
+		if ( localplayer->GetObserverMode() == OBS_MODE_IN_EYE &&
+			 localplayer->GetObserverTarget() == GetOwner() ) 
+			return false;
 	}
 
 	return BaseClass::DrawModel( flags );
@@ -573,35 +514,6 @@ int C_BaseCombatWeapon::CalcOverrideModelIndex()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// If the local player is visible (thirdperson mode, tf2 taunts, etc., then make sure that we are using the
-//  w_ (world) model not the v_ (view) model or else the model can flicker, etc.
-// Otherwise, if we're not the local player, always use the world model
-//-----------------------------------------------------------------------------
-void C_BaseCombatWeapon::EnsureCorrectRenderingModel()
-{
-	C_BasePlayer *localplayer = C_BasePlayer::GetLocalPlayer();
-	if ( localplayer &&
-		localplayer == GetOwner() &&
-		!ShouldDrawUsingViewModel() )
-	{
-		return;
-	}
-
-	// BRJ 10/14/02
-	// FIXME: Remove when Yahn's client-side prediction is done
-	// It's a hacky workaround for the model indices fighting
-	// (GetRenderBounds uses the model index, which is for the view model)
-	SetModelIndex( GetWorldModelIndex() );
-
-	// Validate our current sequence just in case ( in theory the view and weapon models should have the same sequences for sequences that overlap at least )
-	CStudioHdr *pStudioHdr = GetModelPtr();
-	if ( pStudioHdr &&
-		GetSequence() >= pStudioHdr->GetNumSeq() )
-	{
-		SetSequence( 0 );
-	}
-}
 
 //-----------------------------------------------------------------------------
 // tool recording

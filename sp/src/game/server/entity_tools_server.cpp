@@ -14,13 +14,6 @@
 #include "sceneentity.h"
 #include "particles/particles.h"
 
-#if _MSC_VER >= 1900
-#include "icommandline.h"
-#endif
-
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
-
 
 //-----------------------------------------------------------------------------
 // Interface from engine to tools for manipulating entities
