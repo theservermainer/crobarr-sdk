@@ -1,6 +1,12 @@
 Hiya. This is the public github repo for CROBARR MAYN. The license for the usage of said code is about the same as Mapbase's, do what ya want, have sum fun, just credit me for any changes I made that you just so happen to use.
 
-Credits TBA
+>>>>>>>> EXTERNAL CONTENT USED IN CROBARR MAYN <<<<<<<<
+
+The phrase "first half life mod" is not used lightly. Since I'm not a pro level programmer or whatever yet, I've used some code from other people's contribution to the 2013 Source Engine to make use of in this project, because I either found it useful, cool, or important to the mod itself.
+
+Code used from other repositories added onto this codebase:
+- CSS Weapons in HL2 by Blixibon https://github.com/Blixibon/source-sdk-2013/tree/misc/css-weapons-in-hl2
+- Talking HL2 Player by Blixibon https://github.com/Blixibon/source-sdk-2013/tree/misc/talking-hl2-player
 
 //=========================================================================================================================
 
