@@ -14,7 +14,7 @@ The phrase "first half life mod" is not used lightly. Since I'm not a pro level 
 Code used from other repositories added onto this codebase:
 - CSS Weapons in HL2 by Blixibon https://github.com/Blixibon/source-sdk-2013/tree/misc/css-weapons-in-hl2
 - Talking HL2 Player by Blixibon https://github.com/Blixibon/source-sdk-2013/tree/misc/talking-hl2-player
-- HL1/Goldsrc Viewbob by NicolasDe https://github.com/SourceEnginePlayground/Hyperborea/tree/master
+- HL1/Goldsrc Viewbob source engine implementation by NicolasDe https://github.com/SourceEnginePlayground/Hyperborea/tree/master
 
 Everthing after this will be from Mapbase's repository and from Source SDK 2013.
 
