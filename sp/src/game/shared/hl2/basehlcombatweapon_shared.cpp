@@ -237,9 +237,9 @@ float	g_verticalBob;
 #define	HL2_BOB_UP		0.5f
 
 
-static ConVar	cl_bobcycle( "cl_bobcycle","0.8" );
-static ConVar	cl_bob( "cl_bob","0.006" );
-static ConVar	cl_bobup( "cl_bobup","0.5" );
+static ConVar	cl_hl1_weaponbobcycle( "cl_hl1_weaponbobcycle","0.8" );
+static ConVar	cl_hl1_weaponbob( "cl_hl1_weaponbob","0.01" );
+static ConVar	cl_hl1_weaponbobup( "cl_hl1_weaponbobup","0.5" );
 
 // Register these cvars if needed for easy tweaking
 static ConVar	v_iyaw_cycle( "v_iyaw_cycle", "2"/*, FCVAR_UNREGISTERED*/ );
@@ -276,22 +276,22 @@ float CBaseHLCombatWeapon::CalcViewmodelBob(void)
 	bobtime += gpGlobals->frametime;
 
 	//Calculate the vertical bob
-	cycle = bobtime - (int)(bobtime / cl_bobcycle.GetFloat()) * cl_bobcycle.GetFloat();
-	cycle /= cl_bobcycle.GetFloat();
+	cycle = bobtime - (int)(bobtime / cl_hl1_weaponbobcycle.GetFloat()) * cl_hl1_weaponbobcycle.GetFloat();
+	cycle /= cl_hl1_weaponbobcycle.GetFloat();
 
-	if (cycle < cl_bobup.GetFloat())
+	if (cycle < cl_hl1_weaponbobup.GetFloat())
 	{
-		cycle = M_PI * cycle / cl_bobup.GetFloat();
+		cycle = M_PI * cycle / cl_hl1_weaponbobup.GetFloat();
 	}
 	else
 	{
-		cycle = M_PI + M_PI * (cycle - cl_bobup.GetFloat()) / (1.0 - cl_bobup.GetFloat());
+		cycle = M_PI + M_PI * (cycle - cl_hl1_weaponbobup.GetFloat()) / (1.0 - cl_hl1_weaponbobup.GetFloat());
 	}
 
 	//Find the speed of the player
 	Vector2D vel = player->GetLocalVelocity().AsVector2D();
 
-	bob = sqrt(vel[0] * vel[0] + vel[1] * vel[1]) * cl_bob.GetFloat();
+	bob = sqrt(vel[0] * vel[0] + vel[1] * vel[1]) * cl_hl1_weaponbob.GetFloat();
 	bob = bob * 0.3 + bob * 0.7 * sin(cycle);
 	bob = min(bob, 4);
 	bob = max(bob, -7);

@@ -648,6 +648,152 @@ public:
 
 LINK_ENTITY_TO_CLASS( item_ammo_ar2_altfire, CItem_AR2AltFireRound );
 
+#ifdef CSS_WEAPONS_IN_HL2
+// ========================================================================
+//	>> Box45ACPRounds
+// ========================================================================
+class CItem_Box45ACPRounds : public CItem
+{
+public:
+	DECLARE_CLASS( CItem_Box45ACPRounds, CItem );
+
+	void Spawn( void )
+	{ 
+		Precache( );
+		SetModel( "models/items/45acp_box.mdl" );
+		BaseClass::Spawn( );
+	}
+	void Precache( void )
+	{
+		PrecacheModel ("models/items/45acp_box.mdl");
+	}
+	bool MyTouch( CBasePlayer *pPlayer )
+	{
+		if (ITEM_GiveAmmo( pPlayer, !IsLarge() ? SIZE_AMMO_45ACP : SIZE_AMMO_45ACP_LARGE, "45ACP"))
+		{
+			if ( g_pGameRules->ItemShouldRespawn( this ) == GR_ITEM_RESPAWN_NO )
+			{
+				UTIL_Remove(this);	
+			}
+
+			return true;
+		}
+		return false;
+	}
+	inline bool IsLarge() { return ClassMatches("item_css_ammo_45acp_large"); }
+};
+LINK_ENTITY_TO_CLASS( item_css_ammo_45acp, CItem_Box45ACPRounds );
+LINK_ENTITY_TO_CLASS( item_css_ammo_45acp_large, CItem_Box45ACPRounds );
+
+// ========================================================================
+//	>> Box357SIGRounds
+// ========================================================================
+class CItem_Box357SIGRounds : public CItem
+{
+public:
+	DECLARE_CLASS( CItem_Box357SIGRounds, CItem );
+
+	void Spawn( void )
+	{ 
+		Precache( );
+		SetModel( "models/items/357sig_box.mdl" );
+		BaseClass::Spawn( );
+	}
+	void Precache( void )
+	{
+		PrecacheModel ("models/items/357sig_box.mdl");
+	}
+	bool MyTouch( CBasePlayer *pPlayer )
+	{
+		if (ITEM_GiveAmmo( pPlayer, !IsLarge() ? SIZE_AMMO_357SIG : SIZE_AMMO_357SIG_LARGE, "357SIG"))
+		{
+			if ( g_pGameRules->ItemShouldRespawn( this ) == GR_ITEM_RESPAWN_NO )
+			{
+				UTIL_Remove(this);	
+			}
+
+			return true;
+		}
+		return false;
+	}
+	inline bool IsLarge() { return ClassMatches("item_css_ammo_357sig_large"); }
+};
+LINK_ENTITY_TO_CLASS( item_css_ammo_357sig, CItem_Box357SIGRounds );
+LINK_ENTITY_TO_CLASS( item_css_ammo_357sig_large, CItem_Box357SIGRounds );
+
+// ========================================================================
+//	>> Box556mmRounds
+// ========================================================================
+class CItem_Box556mmRounds : public CItem
+{
+public:
+	DECLARE_CLASS( CItem_Box556mmRounds, CItem );
+
+	void Spawn( void )
+	{ 
+		Precache( );
+		SetModel( "models/items/556mm_box.mdl" );
+		BaseClass::Spawn( );
+	}
+	void Precache( void )
+	{
+		PrecacheModel ("models/items/556mm_box.mdl");
+	}
+	bool MyTouch( CBasePlayer *pPlayer )
+	{
+		if (ITEM_GiveAmmo( pPlayer, !IsLarge() ? SIZE_AMMO_556mm : SIZE_AMMO_556mm_LARGE, "556mm"))
+		{
+			if ( g_pGameRules->ItemShouldRespawn( this ) == GR_ITEM_RESPAWN_NO )
+			{
+				UTIL_Remove(this);	
+			}
+
+			return true;
+		}
+		return false;
+	}
+	inline bool IsLarge() { return ClassMatches("item_css_ammo_556mm_large"); }
+};
+LINK_ENTITY_TO_CLASS( item_css_ammo_556mm, CItem_Box556mmRounds );
+LINK_ENTITY_TO_CLASS( item_css_ammo_556mm_large, CItem_Box556mmRounds );
+
+// ========================================================================
+//	>> Box762mmRounds
+// ========================================================================
+class CItem_Box762mmRounds : public CItem
+{
+public:
+	DECLARE_CLASS( CItem_Box762mmRounds, CItem );
+
+	void Spawn( void )
+	{ 
+		Precache( );
+		SetModel( "models/items/762mm_box.mdl" );
+		BaseClass::Spawn( );
+	}
+	void Precache( void )
+	{
+		PrecacheModel ("models/items/762mm_box.mdl");
+	}
+	bool MyTouch( CBasePlayer *pPlayer )
+	{
+		if (ITEM_GiveAmmo( pPlayer, !IsLarge() ? SIZE_AMMO_762mm : SIZE_AMMO_762mm_LARGE, "762mm"))
+		{
+			if ( g_pGameRules->ItemShouldRespawn( this ) == GR_ITEM_RESPAWN_NO )
+			{
+				UTIL_Remove(this);	
+			}
+
+			return true;
+		}
+		return false;
+	}
+	inline bool IsLarge() { return ClassMatches("item_css_ammo_762mm_large"); }
+};
+LINK_ENTITY_TO_CLASS( item_css_ammo_762mm, CItem_Box762mmRounds );
+LINK_ENTITY_TO_CLASS( item_css_ammo_762mm_large, CItem_Box762mmRounds );
+#endif
+
 // ==================================================================
 // Ammo crate which will supply infinite ammo of the specified type
 // ==================================================================
@@ -714,7 +860,6 @@ protected:
 #ifdef MAPBASE
 	COutputEvent	m_OnAmmoTaken;
 #endif
-
 	DECLARE_DATADESC();
 };
 
@@ -738,7 +883,6 @@ BEGIN_DATADESC( CItem_AmmoCrate )
 #ifdef MAPBASE
 	DEFINE_OUTPUT( m_OnAmmoTaken, "OnAmmoTaken" ),
 #endif
-
 	DEFINE_INPUTFUNC( FIELD_VOID, "Kill", InputKill ),
 
 	DEFINE_THINKFUNC( CrateThink ),
@@ -765,15 +909,15 @@ const char *CItem_AmmoCrate::m_lpzModelNames[NUM_AMMO_CRATE_TYPES] =
 #else
 	"models/items/ammocrate_smg1.mdl",		// 357
 	"models/items/ammocrate_smg1.mdl",	// Crossbow
-
+	
 	//FIXME: This model is incorrect!
 	"models/items/ammocrate_ar2.mdl",		// Combine Ball 
-#endif
+#endif	  
 	"models/items/ammocrate_smg2.mdl",	    // smg grenade
 #ifdef MAPBASE
 	"models/items/ammocrate_slam.mdl",	    // slam
 	"models/items/ammocrate_empty.mdl",	    // empty
-#endif
+#endif	  
 };
 
 // Ammo type names
@@ -792,7 +936,7 @@ const char *CItem_AmmoCrate::m_lpzAmmoNames[NUM_AMMO_CRATE_TYPES] =
 #ifdef MAPBASE
 	"slam",
 	NULL,
-#endif
+#endif	  
 };
 
 // Ammo amount given per +use
@@ -811,7 +955,7 @@ int CItem_AmmoCrate::m_nAmmoAmounts[NUM_AMMO_CRATE_TYPES] =
 #ifdef MAPBASE
 	5,		// SLAM
 	NULL,	// Empty
-#endif
+#endif	  
 };
 
 const char *CItem_AmmoCrate::m_pGiveWeapon[NUM_AMMO_CRATE_TYPES] =
@@ -829,7 +973,7 @@ const char *CItem_AmmoCrate::m_pGiveWeapon[NUM_AMMO_CRATE_TYPES] =
 #ifdef MAPBASE
 	"weapon_slam",		// SLAM
 	NULL,	// Empty
-#endif
+#endif	  
 };
 
 #define	AMMO_CRATE_CLOSE_DELAY	1.5f
@@ -888,7 +1032,7 @@ void CItem_AmmoCrate::SetupCrate( void )
 #ifdef MAPBASE
 	// Custom models might be desired on, say, empty crates with custom textures
 	if (GetModelName() == NULL_STRING)
-#endif
+#endif  
 	SetModelName( AllocPooledString( m_lpzModelNames[m_nAmmoType] ) );
 	
 	m_nAmmoIndex = GetAmmoDef()->Index( m_lpzAmmoNames[m_nAmmoType] );
@@ -1014,7 +1158,7 @@ void CItem_AmmoCrate::HandleAnimEvent( animevent_t *pEvent )
 					{
 #ifdef MAPBASE
 						m_OnAmmoTaken.FireOutput(m_hActivator, this);
-#endif
+#endif	  
 						SetBodygroup( 1, false );
 					}
 				}
@@ -1023,13 +1167,13 @@ void CItem_AmmoCrate::HandleAnimEvent( animevent_t *pEvent )
 #ifdef MAPBASE
 			// Empty ammo crates should still fire OnAmmoTaken
 			if ( m_hActivator->GiveAmmo( m_nAmmoAmounts[m_nAmmoType], m_nAmmoIndex ) != 0 || m_nAmmoType == AMMOCRATE_EMPTY )
-#else
+#else	 
 			if ( m_hActivator->GiveAmmo( m_nAmmoAmounts[m_nAmmoType], m_nAmmoIndex ) != 0 )
-#endif
+#endif	  
 			{
 #ifdef MAPBASE
 				m_OnAmmoTaken.FireOutput(m_hActivator, this);
-#endif
+#endif	  
 				SetBodygroup( 1, false );
 			}
 			m_hActivator = NULL;
@@ -1093,7 +1237,6 @@ void CItem_AmmoCrate::InputKill( inputdata_t &data )
 	// I don't understand.
 	m_OnKilled.FireOutput( data.pActivator, this );
 #endif
-
 	UTIL_Remove( this );
 }
 
