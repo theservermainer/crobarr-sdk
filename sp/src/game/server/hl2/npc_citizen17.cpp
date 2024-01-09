@@ -284,29 +284,25 @@ LINK_ENTITY_TO_CLASS(weapon_mattpipe, CMattsPipe);
 
 static const char *g_ppszRandomHeads[] = 
 {
-	"male_01.mdl",
-	"male_02.mdl",
-	"female_01.mdl",
-	"male_03.mdl",
-	"female_02.mdl",
-	"male_04.mdl",
-	"female_03.mdl",
-	"male_05.mdl",
-	"female_04.mdl",
-	"male_06.mdl",
-	"female_06.mdl",
-	"male_07.mdl",
-	"female_07.mdl",
-	"male_08.mdl",
-	"male_09.mdl",
+	"citizen01.mdl",
+	"citizen02.mdl",
+	"citizen03.mdl",
+	"citizen04.mdl",
+	"citizen05.mdl",
+	"citizen06.mdl",
+	"citizen07.mdl",
+	"citizen08.mdl",
+	"citizen09.mdl",
+	"citizen10.mdl",
+	
 };
 
 static const char *g_ppszModelLocs[] =
 {
-	"Group01",
-	"Group01",
-	"Group02",
-	"Group03%s",
+	"morning",
+	"noon",
+	"sunset",
+	"midnight%s",
 };
 
 #define IsExcludedHead( type, bMedic, iHead) false // see XBox codeline for an implementation
@@ -513,7 +509,7 @@ void CNPC_Citizen::PrecacheAllOfType( CitizenType_t type )
 	{
 		if ( !IsExcludedHead( type, false, i ) )
 		{
-			PrecacheModel( CFmtStr( "models/Humans/%s/%s", (const char *)(CFmtStr(g_ppszModelLocs[m_Type], "")), g_ppszRandomHeads[i] ) );
+			PrecacheModel( CFmtStr( "models/crobarr_npc/civilians/%s/%s", (const char *)(CFmtStr(g_ppszModelLocs[m_Type], "")), g_ppszRandomHeads[i] ) );
 		}
 	}
 
@@ -523,7 +519,7 @@ void CNPC_Citizen::PrecacheAllOfType( CitizenType_t type )
 		{
 			if ( !IsExcludedHead( type, true, i ) )
 			{
-				PrecacheModel( CFmtStr( "models/Humans/%s/%s", (const char *)(CFmtStr(g_ppszModelLocs[m_Type], "m")), g_ppszRandomHeads[i] ) );
+				PrecacheModel( CFmtStr( "models/crobarr_npc/civilians/%s/%s", (const char *)(CFmtStr(g_ppszModelLocs[m_Type], "m")), g_ppszRandomHeads[i] ) );
 			}
 		}
 	}
@@ -749,7 +745,7 @@ void CNPC_Citizen::SelectModel()
 		RemoveSpawnFlags( SF_CITIZEN_RANDOM_HEAD | SF_CITIZEN_RANDOM_HEAD_MALE | SF_CITIZEN_RANDOM_HEAD_FEMALE );
 		if( HasSpawnFlags( SF_NPC_START_EFFICIENT ) )
 		{
-			SetModelName( AllocPooledString("models/humans/male_cheaple.mdl" ) );
+			SetModelName( AllocPooledString("models/crobarr_npc/civilians/citizen01.mdl" ) );
 			return;
 		}
 		else
@@ -816,7 +812,7 @@ void CNPC_Citizen::SelectModel()
 					break;
 			}
 
-			const char *pszModelPath = CFmtStr( "models/Humans/%s/", (const char *)(CFmtStr( g_ppszModelLocs[m_Type], (IsMedic()) ? "m" : "" )) );
+			const char *pszModelPath = CFmtStr( "models/crobarr_npc/civilians/%s/", (const char *)(CFmtStr( g_ppszModelLocs[m_Type], (IsMedic()) ? "m" : "" )) );
 
 			// model_path, model_head, gender
 			ScriptVariant_t args[] = { pszModelPath, pszModelName, (int)scriptGender };
@@ -879,7 +875,7 @@ void CNPC_Citizen::SelectModel()
 	// Unique citizen models are left alone
 	if ( m_Type != CT_UNIQUE )
 	{
-		SetModelName( AllocPooledString( CFmtStr( "models/Humans/%s/%s", (const char *)(CFmtStr(g_ppszModelLocs[ m_Type ], ( IsMedic() ) ? "m" : "" )), pszModelName ) ) );
+		SetModelName( AllocPooledString( CFmtStr( "models/crobarr_npc/civilians/%s/%s", (const char *)(CFmtStr(g_ppszModelLocs[ m_Type ], ( IsMedic() ) ? "m" : "" )), pszModelName ) ) );
 	}
 }
 

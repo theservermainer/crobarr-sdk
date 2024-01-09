@@ -103,7 +103,7 @@ Color CTargetID::GetColorForTargetTeam( int iTeamNumber )
 void CTargetID::Paint()
 {
 #define MAX_ID_STRING 256
-	wchar_t sIDString[ MAX_ID_STRING ];
+	wchar_t sIDString[MAX_ID_STRING]{};
 	sIDString[0] = 0;
 
 	C_HL2MP_Player *pPlayer = C_HL2MP_Player::GetLocalHL2MPPlayer();

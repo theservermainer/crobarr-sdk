@@ -8,6 +8,12 @@
 // Project definitions //
 /////////////////////////
 
+$Project "gamepadui"
+{
+	"game\gamepadui\gamepadui_hl2.vpc"		[($WIN32||$LINUX) && $BUILD_GAMEPADUI && $HL2]
+	"game\gamepadui\gamepadui_episodic.vpc"	[($WIN32||$LINUX) && $BUILD_GAMEPADUI && $EPISODIC]
+}
+
 $Project "captioncompiler"
 {
 	"utils\captioncompiler\captioncompiler.vpc" [$WIN32]
@@ -23,6 +29,7 @@ $Project "fgdlib"
 {
 	"fgdlib\fgdlib.vpc" [$WIN32]
 }
+
 
 $Project "game_shader_dx9"
 {

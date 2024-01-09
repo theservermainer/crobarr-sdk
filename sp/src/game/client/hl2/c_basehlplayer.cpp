@@ -742,8 +742,8 @@ void C_BaseHLPlayer::CalcViewRoll(QAngle& eyeAngles)
 	}
 }
 
-ConVar cl_hl1_bobcycle("cl_hl1_bobcycle", "0.8");
-ConVar cl_hl1_bob("cl_hl1_bob", "0.02");
+ConVar cl_hl1_bobcycle("cl_hl1_bobcycle", "0.42");
+ConVar cl_hl1_bob("cl_hl1_bob", "0.015");
 ConVar cl_hl1_bobup("cl_hl1_bobup", "0.5");
 
 // Port from HL1 code:

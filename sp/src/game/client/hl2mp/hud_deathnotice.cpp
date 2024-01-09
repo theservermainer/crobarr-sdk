@@ -301,7 +301,7 @@ void CHudDeathNotice::FireGameEvent( IGameEvent * event )
 		victim_name = "";
 
 	// Make a new death notice
-	DeathNoticeItem deathMsg;
+	DeathNoticeItem deathMsg{};
 	deathMsg.Killer.iEntIndex = killer;
 	deathMsg.Victim.iEntIndex = victim;
 	Q_strncpy( deathMsg.Killer.szName, killer_name, MAX_PLAYER_NAME_LENGTH );

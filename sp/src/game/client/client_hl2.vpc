@@ -18,6 +18,7 @@ $Configuration
 		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;$SRCDIR\game\shared\hl2;$BASE"
 		$PreprocessorDefinitions		"$BASE;HL2_CLIENT_DLL"
 		$PreprocessorDefinitions		"$BASE;CSS_WEAPONS_IN_HL2"
+		$PreprocessorDefinitions		"$BASE;GAMEUI2"
 	}
 }
 
@@ -25,7 +26,6 @@ $Project "Client (HL2)"
 {
 	$Folder	"Source Files"
 	{
-		$File	"hud_chat.cpp"
 		$File	"c_team_objectiveresource.cpp"
 		$File	"c_team_objectiveresource.h"
 
@@ -115,6 +115,7 @@ $Project "Client (HL2)"
 			$File 	"episodic\c_vort_charge_token.cpp"
 			
 			
+			
 			$Folder	"CS:S Weapons"
 			{
 				//$File	"$SRCDIR\game\shared\hl2\weapon_css_base_activitylists.cpp"
@@ -126,6 +127,8 @@ $Project "Client (HL2)"
 				$File	"$SRCDIR\game\shared\hl2\weapon_css_smgs.cpp"
 				$File	"$SRCDIR\game\shared\hl2\weapon_css_misc.cpp"
 			}
+			
+	
 		}
 	}
 }

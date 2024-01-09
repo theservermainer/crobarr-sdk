@@ -8,6 +8,14 @@
 // Group definitions //
 ///////////////////////
 
+$Group "gamepadui"
+{
+	"mathlib"
+	"tier1"
+	"vgui_controls"
+	"gamepadui"
+}
+
 $Group "gamedlls"
 {
 	"client"
@@ -16,6 +24,7 @@ $Group "gamedlls"
 
 $Group "game"
 {
+	"gamepadui"
 	"client"
 	"mathlib"
 	"raytrace"
@@ -65,6 +74,7 @@ $Group "everything"
 	"vtfdiff"
 	"vvis_dll"
 	"vvis_launcher"
+	"gamepadui"
 }
 
 $Group "dedicated"
@@ -87,4 +97,6 @@ $Group "maptools"
 	"tier1"
 	"vscript"
 }
+
+
 
